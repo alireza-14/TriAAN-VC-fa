@@ -38,6 +38,7 @@ train:
   batch_size:   16
   accum_step: 1
   lr: 1e-4
+  lr_scheduler: constant
   loss: l1
   eval_every: 100
   save_epoch: 100

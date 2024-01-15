@@ -25,6 +25,7 @@ class Trainer:
         self.model     = TriAANVC(cfg.model.encoder, cfg.model.decoder).to(cfg.device)
         self.criterion = self._select_loss().to(cfg.device)
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=float(cfg.train.lr))
+        self.lr_scheduler = self._select_lr_scheduler()
         self.augment   = Augment()
         
         self.train_loader = data['train']
@@ -70,6 +71,28 @@ class Trainer:
         elif self.cfg.train.loss == 'l2':
             criterion =nn.MSELoss()
         return criterion
+    
+    def _select_lr_scheduler(self):
+        if self.cfg.train.lr_scheduler == "constant":
+            scheduler = torch.optim.lr_scheduler.ConstantLR(self.optimizer, factor=1.0, total_iters=-1)
+        elif self.cfg.train.lr_scheduler == "linear":
+            scheduler = torch.optim.lr_scheduler.LinearLR(
+                self.optimizer, start_factor=1.0,
+                end_factor=0.0, total_iters=self.cfg.train.epoch
+            )
+        elif self.cfg.train.lr_scheduler == "step":
+            scheduler = torch.optim.lr_scheduler.StepLR(
+                self.optimizer, step_size=20,
+                gamma=0.5
+            )
+        elif self.cfg.train.lr_scheduler == "exponential":
+            scheduler = torch.optim.lr_scheduler.ExponentialLR(
+                self.optimizer, gamma=0.9
+            )
+        else:
+            raise Exception("learning rate scheduler should be one of ['constant', \
+                            'linear', 'step', 'exponential']")
+        return scheduler
 
     def train(self):
         
