@@ -27,28 +27,28 @@ def main(cfg):
     else:
         all_wavs, train_wavs_names, valid_wavs_names, test_wavs_names = SplitDataset(all_spks, cfg)
 
-    print('---Feature extraction---')
-    if cfg.use_hf:
-        results = Parallel(n_jobs=-1)(delayed(ProcessingTrainDataHF)(wav_path, cfg) for wav_path in tqdm(all_wavs))
-    else:
-        results = Parallel(n_jobs=-1)(delayed(ProcessingTrainData)(wav_path, cfg) for wav_path in tqdm(all_wavs))
-
-    wn2info = {}
-    for r in results:
-        wav_name, mel, lf0, mel_len, speaker, text, path = r
-        wn2info[wav_name] = [mel, lf0, mel_len, speaker, text, path]
+    split_results = {}
+    for split, data in [('train', train_wavs_names), ('valid', valid_wavs_names), ('test', test_wavs_names)]:
+        print('---Feature extraction---')
+        if cfg.use_hf:
+            results = Parallel(n_jobs=-1)(delayed(ProcessingTrainDataHF)(wav_path, cfg) for wav_path in tqdm(data))
+        else:
+            results = Parallel(n_jobs=-1)(delayed(ProcessingTrainData)(wav_path, cfg) for wav_path in tqdm(data))
         
-    mean, std = ExtractMelstats(wn2info, train_wavs_names, cfg) # only use train wav for normalizing stats
-    
-    print('---Write Features---')
-    train_results = Parallel(n_jobs=-1)(delayed(SaveFeatures)(wav_name, wn2info[wav_name], 'train', cfg) for wav_name in tqdm(train_wavs_names))
-    valid_results = Parallel(n_jobs=-1)(delayed(SaveFeatures)(wav_name, wn2info[wav_name], 'valid', cfg) for wav_name in tqdm(valid_wavs_names))
-    test_results  = Parallel(n_jobs=-1)(delayed(SaveFeatures)(wav_name, wn2info[wav_name], 'test', cfg) for wav_name in tqdm(test_wavs_names))
+        wn2info = {}
+        for r in results:
+            wav_name, mel, lf0, mel_len, speaker, text, path = r
+            wn2info[wav_name] = [mel, lf0, mel_len, speaker, text, path]
+        
+        mean, std = ExtractMelstats(wn2info, train_wavs_names, cfg) # only use train wav for normalizing stats
+
+        print('---Write Features---')
+        split_results[split] = Parallel(n_jobs=-1)(delayed(SaveFeatures)(wav_name, wn2info[wav_name], split, cfg) for wav_name in tqdm(data))
 
     if cfg.use_hf:
-        train_results, valid_results, test_results = GetMetaResultsHF(train_results, valid_results, test_results, cfg)
+        train_results, valid_results, test_results = GetMetaResultsHF(split_results['train'], split_results['valid'], split_results['test'], cfg)
     else:
-        train_results, valid_results, test_results = GetMetaResults(train_results, valid_results, test_results, cfg)
+        train_results, valid_results, test_results = GetMetaResults(split_results['train'], split_results['valid'], split_results['test'], cfg)
     
     print('---Write Infos---')
     Write_json(train_results, f'{cfg.output_path}/train.json')
