@@ -23,12 +23,12 @@ def main(cfg):
 
     print('---Split dataset---')
     if cfg.use_hf:
-        all_wavs, train_wavs_names, valid_wavs_names, test_wavs_names = SplitDatasetHF(all_spks, cfg)
+        train_wavs, valid_wavs, test_wavs, train_wavs_names, valid_wavs_names, test_wavs_names = SplitDatasetHF(all_spks, cfg)
     else:
         all_wavs, train_wavs_names, valid_wavs_names, test_wavs_names = SplitDataset(all_spks, cfg)
 
     split_results = {}
-    for split, data in [('train', train_wavs_names), ('valid', valid_wavs_names), ('test', test_wavs_names)]:
+    for split, data, names in [('train', train_wavs, train_wavs_names), ('valid', valid_wavs, valid_wavs_names), ('test', test_wavs, test_wavs_names)]:
         print('---Feature extraction---')
         if cfg.use_hf:
             results = Parallel(n_jobs=-1)(delayed(ProcessingTrainDataHF)(wav_path, cfg) for wav_path in tqdm(data))
@@ -43,7 +43,7 @@ def main(cfg):
         mean, std = ExtractMelstats(wn2info, train_wavs_names, cfg) # only use train wav for normalizing stats
 
         print('---Write Features---')
-        split_results[split] = Parallel(n_jobs=-1)(delayed(SaveFeatures)(wav_name, wn2info[wav_name], split, cfg) for wav_name in tqdm(data))
+        split_results[split] = Parallel(n_jobs=-1)(delayed(SaveFeatures)(wav_name, wn2info[wav_name], split, cfg) for wav_name in tqdm(names))
 
     if cfg.use_hf:
         train_results, valid_results, test_results = GetMetaResultsHF(split_results['train'], split_results['valid'], split_results['test'], cfg)

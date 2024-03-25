@@ -306,11 +306,14 @@ def SplitDatasetHF(all_spks, cfg):
         spk_wavs_names  = [os.path.basename(p).split('.')[0] for p in spk_wavs]
         test_wavs_names += spk_wavs_names
     
-    all_wavs = [('/'.join([cfg.data_path, i['path']]), i['sentence']) for i in dataset]
+    train_wavs = [('/'.join([cfg.data_path, i['path']]), i['sentence']) for i in dataset.filter(lambda x: os.path.basename(x['path']).split('.')[0] in train_wavs_names)]
+    valid_wavs = [('/'.join([cfg.data_path, i['path']]), i['sentence']) for i in dataset.filter(lambda x: os.path.basename(x['path']).split('.')[0] in train_wavs_names)]
+    test_wavs = [('/'.join([cfg.data_path, i['path']]), i['sentence']) for i in dataset.filter(lambda x: os.path.basename(x['path']).split('.')[0] in train_wavs_names)]
+
+    total_wavs_num = len(train_wavs) + len(valid_wavs) + len(test_wavs)
+    print(f'Total files: {total_wavs_num}, Train: {len(train_wavs_names)}, Valid: {len(valid_wavs_names)}, Test: {len(test_wavs_names)}, Del Files: {total_wavs_num-len(train_wavs_names)-len(valid_wavs_names)-len(test_wavs_names)}')
     
-    print(f'Total files: {len(all_wavs)}, Train: {len(train_wavs_names)}, Valid: {len(valid_wavs_names)}, Test: {len(test_wavs_names)}, Del Files: {len(all_wavs)-len(train_wavs_names)-len(valid_wavs_names)-len(test_wavs_names)}')
-    
-    return all_wavs, train_wavs_names, valid_wavs_names, test_wavs_names
+    return train_wavs, valid_wavs, test_wavs, train_wavs_names, valid_wavs_names, test_wavs_names
 
 def GetMetaResults(train_results, valid_results, test_results, cfg):
     """
