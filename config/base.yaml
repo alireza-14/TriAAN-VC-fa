@@ -46,3 +46,4 @@ train:
 
 test:
   threshold: 0.6895345449450861 # acquired from vctk dataset
+  evaluation: false

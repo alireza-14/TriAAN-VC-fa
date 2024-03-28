@@ -39,7 +39,7 @@ def main(cfg):
         print('--- Test Phase ---')
         seed_init(seed=cfg.seed)
         tester = Tester(cfg)
-        tester.test(set_type='test')
+        tester.test(set_type='test', evaluation=cfg.test.evaluation)
 
         if cfg.logging:
             neptune.stop()
@@ -47,7 +47,7 @@ def main(cfg):
     else:
         print('--- Test Phase ---')
         tester = Tester(cfg)
-        tester.test(set_type='test')
+        tester.test(set_type='test', evaluation=cfg.test.evaluation)
 
 if __name__ == "__main__":
     

@@ -99,7 +99,7 @@ class Trainer:
                 neptune.log_metric('valid loss', val_loss)
                 
             if epoch % self.cfg.train.eval_every == 0:
-                self.tester.test(set_type='valid')
+                self.tester.test(set_type='valid', evaluation=self.cfg.test.evaluation)
                 
     def _run_epoch(self, data_loader, valid=False):
         
