@@ -123,6 +123,8 @@ class Tester:
         
         for key in output_dict:
             output_list = output_dict[key]
+            if len(output_list) == 0:
+                continue
             convert_dir = opj(self.cfg.converted_path, set_type, key)
             MakeDir(convert_dir)
             feat_writer = kaldiio.WriteHelper("ark,scp:{o}.ark,{o}.scp".format(o=str(convert_dir)+'/feats.1'))
