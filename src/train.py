@@ -107,11 +107,12 @@ class Trainer:
         num_batches = len(data_loader)
         for i, batch in enumerate(tqdm(data_loader)):
             
-            src_feat = batch['feat'].to(self.cfg.device)
-            src_lf0  = batch['lf0'].to(self.cfg.device)
-            src_mel  = batch['mel'].to(self.cfg.device)
+            src_feat = batch['src_feat'].to(self.cfg.device)
+            src_lf0  = batch['src_lf0'].to(self.cfg.device)
+            src_mel  = batch['src_mel'].to(self.cfg.device)
+            trg_feat = batch['trg_feat'].to(self.cfg.device)
 
-            output = self.model(src_feat, src_lf0, src_feat)
+            output = self.model(src_feat, src_lf0, trg_feat)
             loss   = self.criterion(output, src_mel)         # reconstruction loss
 
             if self.cfg.train.siam:

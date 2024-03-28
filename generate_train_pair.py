@@ -11,14 +11,18 @@ def get_speaker_samples(info):
     spk_id = sample['speaker']
     samples_list = spk2samples.get(spk_id, [])
     samples_list.append(sample)
+    spk2samples[spk_id] = samples_list
   return spk2samples
 
 
 def generate_train_pairs(cfg, spk_samples, shuffle_func):
-  train_pairs = combinations(spk_samples, 2)
+  train_pairs = list(combinations(spk_samples, 2))
   shuffle_func(train_pairs)
-  selected_pairs = train_pairs[:cfg.num_train_samples]
-  annotated_pairs = [{'cnt_sample':pair[0], 'trg_sample':pair[1]} for pair in selected_pairs]
+  if len(train_pairs) > cfg.num_train_samples:
+    selected_pairs = train_pairs[:cfg.num_train_samples]
+  else:
+    selected_pairs = train_pairs
+  annotated_pairs = [{'src_sample':pair[0], 'trg_sample':pair[1]} for pair in selected_pairs]
   return annotated_pairs
     
 
@@ -27,8 +31,8 @@ def main(cfg):
   shuffle = random.Random(cfg.seed).shuffle
   print("--- Read Train Samples---")
   train_info = Read_json(f"{cfg.output_path}/train.json")
-  print(f"\tNumber of Total Samples: {len(train_info)}")
-  spk2samples = get_speaker_samples()
+  print(f"   Number of Total Samples: {len(train_info)}")
+  spk2samples = get_speaker_samples(train_info)
   train_samples = []
   for spk, samples in tqdm(spk2samples.items()):
     train_samples += generate_train_pairs(cfg, samples, shuffle)

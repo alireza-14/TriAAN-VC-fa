@@ -51,33 +51,60 @@ class TrainDataset(Dataset):
 
     def __getitem__(self, index):
               
-        mel_path = self.metadata[index]['mel_path']
-        lf0_path = self.metadata[index]['lf0_path']
+        src_mel_path = self.metadata[index]['src_sample']['mel_path']
+        src_lf0_path = self.metadata[index]['src_sample']['lf0_path']
+        trg_mel_path = self.metadata[index]['trg_sample']['mel_path']
+        trg_lf0_path = self.metadata[index]['trg_sample']['lf0_path']
+
         if self.cfg.train.cpc:
-            feat_path = self.metadata[index]['cpc_path']
-            feat      = np.load(feat_path).T
+            src_feat_path = self.metadata[index]['src_sample']['cpc_path']
+            src_feat      = np.load(src_feat_path).T
+            trg_feat_path = self.metadata[index]['trg_sample']['cpc_path']
+            trg_feat = np.load(trg_feat_path).T
         else:
-            feat_path = self.metadata[index]['mel_path']
-            feat      = np.load(feat_path).T
-            feat      = (feat - self.mean) / (self.std + self.eps)
+            src_feat_path = self.metadata[index]['src_sample']['mel_path']
+            src_feat      = np.load(src_feat_path).T
+            src_feat      = (src_feat - self.mean) / (self.std + self.eps)
+            trg_feat_path = self.metadata[index]['trg_sample']['mel_path']
+            trg_feat      = np.load(trg_feat_path).T
+            trg_feat      = (trg_feat - self.mean) / (self.std + self.eps)
             
-        mel  = np.load(mel_path).T
-        mel  = (mel - self.mean) / (self.std + self.eps)
-        lf0  = np.load(lf0_path)
+        src_mel  = np.load(src_mel_path).T
+        src_mel  = (src_mel - self.mean) / (self.std + self.eps)
+        src_lf0  = np.load(src_lf0_path)
+        trg_mel = np.load(trg_mel_path).T
+        trg_mel = (trg_mel - self.mean) / (self.std + self.eps)
+        trg_lf0 = np.load(trg_lf0_path)
 
-        if self.n_frames > feat.shape[-1]:
-            feat_len = feat.shape[-1]
-            feat     = np.tile(feat, int(np.ceil(self.n_frames / feat_len)))
-            mel      = np.tile(mel, int(np.ceil(self.n_frames / feat_len)))
-            lf0      = np.tile(lf0, int(np.ceil(self.n_frames / feat_len)))
+        if self.n_frames > src_feat.shape[-1]:
+            src_feat_len = src_feat.shape[-1]
+            src_feat     = np.tile(src_feat, int(np.ceil(self.n_frames / src_feat_len)))
+            src_mel      = np.tile(src_mel, int(np.ceil(self.n_frames / src_feat_len)))
+            src_lf0      = np.tile(src_lf0, int(np.ceil(self.n_frames / src_feat_len)))
 
-        lf0            = self.normalize_lf0(lf0)
-        feat, mel, lf0 = self.sample_frame(feat, mel, lf0)
+        if self.n_frames > trg_feat.shape[-1]:
+            trg_feat_len = trg_feat.shape[-1]
+            trg_feat     = np.tile(trg_feat, int(np.ceil(self.n_frames / trg_feat_len)))
+            trg_mel      = np.tile(trg_mel, int(np.ceil(self.n_frames / trg_feat_len)))
+            trg_lf0      = np.tile(trg_lf0, int(np.ceil(self.n_frames / trg_feat_len)))
+
+        src_lf0            = self.normalize_lf0(src_lf0)
+        src_feat, src_mel, src_lf0 = self.sample_frame(src_feat, src_mel, src_lf0)
+
+        trg_lf0            = self.normalize_lf0(trg_lf0)
+        trg_feat, trg_mel, trg_lf0 = self.sample_frame(trg_feat, trg_mel, trg_lf0)
+
+        output = {'src_feat': torch.from_numpy(src_feat),
+                'src_mel': torch.from_numpy(src_mel),
+                'src_lf0': torch.from_numpy(src_lf0)}
         
-        return {'feat': torch.from_numpy(feat),
-                'mel': torch.from_numpy(mel),
-                'lf0': torch.from_numpy(lf0)
-                }
+
+        if self.cfg.train.use_pair:
+            output['trg_feat'] = torch.from_numpy(trg_feat)
+        else:
+            output['trg_feat'] = torch.from_numpy(src_feat)
+        
+        return output
         
 class ConversionDataset(Dataset):
     def __init__(self, cfg, mode):
