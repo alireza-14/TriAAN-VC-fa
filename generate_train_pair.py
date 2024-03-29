@@ -37,7 +37,7 @@ def main(cfg):
   for spk, samples in tqdm(spk2samples.items()):
     train_samples += generate_train_pairs(cfg, samples, shuffle)
   print('---Write Infos---')
-  Write_json(train_samples, f'{cfg.output_path}/train_pairs.json')
+  Write_json(train_samples, f'{cfg.output_path}/{cfg.split}_pairs.json')
   print('---Done---')
 
 
