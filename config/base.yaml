@@ -44,7 +44,7 @@ train:
   save_epoch: 100
   siam: true
   features: wavlm
-  user_pair: true
+  use_pair: true
 
 test:
   threshold: 0.6895345449450861 # acquired from vctk dataset

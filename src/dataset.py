@@ -18,7 +18,10 @@ class TrainDataset(Dataset):
         self.data_path = Path(cfg.data_path)
         self.n_frames  = cfg.setting.n_frames
         self.speakers  = sorted(os.listdir(self.data_path/f'{mode}/mels'))
-        self.metadata  = Read_json(self.data_path/f'{mode}.json') # [info (mel_len, speaker, wav_path, mel_path, lf0_path, cpc_path, txt, txt_path, test_type)]
+        if self.cfg.train.use_pair:
+            self.metadata  = Read_json(self.data_path/f'{mode}_pair.json')
+        else:
+            self.metadata  = Read_json(self.data_path/f'{mode}.json') # [info (mel_len, speaker, wav_path, mel_path, lf0_path, cpc_path, txt, txt_path, test_type)]
         mel_stats = np.load(cfg.data_path + '/mel_stats.npy')
         self.mean = np.expand_dims(mel_stats[0], -1)
         self.std = np.expand_dims(mel_stats[1], -1)
@@ -46,11 +49,40 @@ class TrainDataset(Dataset):
         lf0  = lf0[pos:pos + self.n_frames]  
         return feat, mel, lf0
 
-    def __len__(self):
-        return len(self.metadata)
+    def get_single_item(self, index):
+        mel_path = self.metadata[index]['mel_path']
+        lf0_path = self.metadata[index]['lf0_path']
+        if self.cfg.train.features == 'wavlm':
+            feat_path = self.metadata[index]['wavlm_path']
+            feat      = np.load(feat_path).T
+        elif self.cfg.train.features == 'cpc':
+            feat_path = self.metadata[index]['cpc_path']
+            feat      = np.load(feat_path).T
+        else:
+            feat_path = self.metadata[index]['mel_path']
+            feat      = np.load(feat_path).T
+            feat      = (feat - self.mean) / (self.std + self.eps)
+            
+        mel  = np.load(mel_path).T
+        mel  = (mel - self.mean) / (self.std + self.eps)
+        lf0  = np.load(lf0_path)
 
-    def __getitem__(self, index):
-              
+        if self.n_frames > feat.shape[-1]:
+            feat_len = feat.shape[-1]
+            feat     = np.tile(feat, int(np.ceil(self.n_frames / feat_len)))
+            mel      = np.tile(mel, int(np.ceil(self.n_frames / feat_len)))
+            lf0      = np.tile(lf0, int(np.ceil(self.n_frames / feat_len)))
+
+        lf0            = self.normalize_lf0(lf0)
+        feat, mel, lf0 = self.sample_frame(feat, mel, lf0)
+        
+        return {'src_feat': torch.from_numpy(feat),
+                'src_mel': torch.from_numpy(mel),
+                'src_lf0': torch.from_numpy(lf0),
+                'trg_feat': torch.from_numpy(feat)
+                }
+
+    def get_pair_item(self, index):
         src_mel_path = self.metadata[index]['src_sample']['mel_path']
         src_lf0_path = self.metadata[index]['src_sample']['lf0_path']
         trg_mel_path = self.metadata[index]['trg_sample']['mel_path']
@@ -101,16 +133,22 @@ class TrainDataset(Dataset):
 
         output = {'src_feat': torch.from_numpy(src_feat),
                 'src_mel': torch.from_numpy(src_mel),
-                'src_lf0': torch.from_numpy(src_lf0)}
-        
-
-        if self.cfg.train.use_pair:
-            output['trg_feat'] = torch.from_numpy(trg_feat)
-        else:
-            output['trg_feat'] = torch.from_numpy(src_feat)
-        
+                'src_lf0': torch.from_numpy(src_lf0),
+                'trg_feat': torch.from_numpy(trg_feat)
+                }
         return output
-        
+
+
+    def __len__(self):
+        return len(self.metadata)
+
+    def __getitem__(self, index):
+        if self.cfg.train.use_pair:
+            return self.get_pair_item(index)
+        else:
+            return self.get_single_item(index)
+
+
 class ConversionDataset(Dataset):
     def __init__(self, cfg, mode):
         
