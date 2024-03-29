@@ -20,3 +20,4 @@ eval_spks: 10 # we can specify the test speakers
 num_samples: 300 # number of sample pairs
 seed: 1234
 num_train_samples: 400
+split: train

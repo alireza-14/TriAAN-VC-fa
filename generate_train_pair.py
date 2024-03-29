@@ -30,14 +30,14 @@ def generate_train_pairs(cfg, spk_samples, shuffle_func):
 def main(cfg):
   shuffle = random.Random(cfg.seed).shuffle
   print("--- Read Train Samples---")
-  train_info = Read_json(f"{cfg.output_path}/train.json")
+  train_info = Read_json(f"{cfg.output_path}/{cfg.split}.json")
   print(f"   Number of Total Samples: {len(train_info)}")
   spk2samples = get_speaker_samples(train_info)
   train_samples = []
   for spk, samples in tqdm(spk2samples.items()):
     train_samples += generate_train_pairs(cfg, samples, shuffle)
   print('---Write Infos---')
-  Write_json(train_samples, f'{cfg.output_path}/train_pairs.json')
+  Write_json(train_samples, f'{cfg.output_path}/{cfg.split}_pairs.json')
   print('---Done---')
 
 
