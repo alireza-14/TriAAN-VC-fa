@@ -5,6 +5,7 @@ spk_info_path: ./vctk/speaker-info.txt
 converted_path:
 vocoder_path: ./vocoder
 cpc_path: ./cpc
+wavlm_path: ./wavlm
 n_uttr:
 
 setting:
