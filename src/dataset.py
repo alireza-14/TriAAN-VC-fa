@@ -56,7 +56,12 @@ class TrainDataset(Dataset):
         trg_mel_path = self.metadata[index]['trg_sample']['mel_path']
         trg_lf0_path = self.metadata[index]['trg_sample']['lf0_path']
 
-        if self.cfg.train.cpc:
+        if self.cfg.train.features == 'wavlm':
+            src_feat_path = self.metadata[index]['src_sample']['wavlm_path']
+            src_feat      = np.load(src_feat_path).T
+            trg_feat_path = self.metadata[index]['trg_sample']['wavlm_path']
+            trg_feat = np.load(trg_feat_path).T
+        elif self.cfg.train.features == 'cpc':
             src_feat_path = self.metadata[index]['src_sample']['cpc_path']
             src_feat      = np.load(src_feat_path).T
             trg_feat_path = self.metadata[index]['trg_sample']['cpc_path']
@@ -151,7 +156,12 @@ class ConversionDataset(Dataset):
         src_spk, src_wav_name, src_mel_path, src_lf0_path = src_info['speaker'], src_info['wav_name'], src_info['mel_path'], src_info['lf0_path']
         trg_spk, trg_wav_name, trg_mel_path, trg_lf0_path = trg_info['speaker'], trg_info['wav_name'], trg_info['mel_path'], trg_info['lf0_path']
         
-        if self.cfg.train.cpc:
+        if self.cfg.train.features == 'wavlm':
+            src_feat_path = src_info['wavlm_path']
+            trg_feat_path = trg_info['wavlm_path']
+            src_feat      = np.load(src_feat_path).T
+            trg_feat      = np.load(trg_feat_path).T
+        elif self.cfg.train.features == 'cpc':
             src_feat_path = src_info['cpc_path']
             trg_feat_path = trg_info['cpc_path']
             src_feat      = np.load(src_feat_path).T
@@ -209,7 +219,10 @@ class MultiConversionDataset(Dataset):
             mel = np.load(trg_info[i]['mel_path']).T
             mel = (mel - self.mean) / (self.std + self.eps)
             trg_mel.append(mel)
-            if self.cfg.train.cpc:
+            if self.cfg.train.features == 'wavlm':
+                feat = np.load(trg_info[i]['wavlm_path']).T
+                trg_feat.append(feat)
+            elif self.cfg.train.features == 'cpc':
                 feat = np.load(trg_info[i]['cpc_path']).T
                 trg_feat.append(feat)
             else:
@@ -243,7 +256,10 @@ class MultiConversionDataset(Dataset):
         src_info, trg_info, _ = self.metadata[index]  # source, target, oracle info
         test_type = src_info['test_type']
         src_spk, src_wav_name, src_mel_path, src_lf0_path = src_info['speaker'], src_info['wav_name'], src_info['mel_path'], src_info['lf0_path']
-        if self.cfg.train.cpc:
+        if self.cfg.train.features == 'wavlm':
+            src_feat_path = src_info['wavlm_path']
+            src_feat      = np.load(src_feat_path).T
+        elif self.cfg.train.features == 'cpc':
             src_feat_path = src_info['cpc_path']
             src_feat      = np.load(src_feat_path).T
         else:

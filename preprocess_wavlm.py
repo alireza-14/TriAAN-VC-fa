@@ -10,7 +10,7 @@ from joblib import Parallel, delayed
 from tqdm import tqdm
 
 from src.utils import *
-from src.cpc import *
+from src.wavlm import *
 from preprocess.audio import *
 
 def _load_wav(path):
@@ -49,11 +49,11 @@ def main(cfg):
 
             for i in tqdm(range(len(metadata))):
                 wav       = _load_wav(metadata[i]['wav_path']).cuda()
-                feat      =  cpc(wav, None)[0].squeeze().detach().cpu().numpy()
-                save_path = metadata[i]['mel_path'].replace('mels', 'cpc')
+                feat      =  wavlm(wav)[0].squeeze().detach().cpu().numpy()
+                save_path = metadata[i]['mel_path'].replace('mels', 'wavlm')
                 os.makedirs(os.path.dirname(save_path), exist_ok=True)
                 np.save(save_path, feat)
-                metadata[i]['cpc_path'] = save_path
+                metadata[i]['wavlm_path'] = save_path
                 
             Write_json(metadata, data_path/f'{mode}.json')
                                         
