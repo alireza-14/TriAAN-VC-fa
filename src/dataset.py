@@ -19,7 +19,7 @@ class TrainDataset(Dataset):
         self.n_frames  = cfg.setting.n_frames
         self.speakers  = sorted(os.listdir(self.data_path/f'{mode}/mels'))
         if self.cfg.train.use_pair:
-            self.metadata  = Read_json(self.data_path/f'{mode}_pair.json')
+            self.metadata  = Read_json(self.data_path/f'{mode}_pairs.json')
         else:
             self.metadata  = Read_json(self.data_path/f'{mode}.json') # [info (mel_len, speaker, wav_path, mel_path, lf0_path, cpc_path, txt, txt_path, test_type)]
         mel_stats = np.load(cfg.data_path + '/mel_stats.npy')
