@@ -30,7 +30,7 @@ def generate_train_pairs(cfg, spk_samples, shuffle_func):
 def main(cfg):
   shuffle = random.Random(cfg.seed).shuffle
   print("--- Read Train Samples---")
-  train_info = Read_json(f"{cfg.output_path}/train.json")
+  train_info = Read_json(f"{cfg.output_path}/{cfg.split}.json")
   print(f"   Number of Total Samples: {len(train_info)}")
   spk2samples = get_speaker_samples(train_info)
   train_samples = []
