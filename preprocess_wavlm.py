@@ -17,8 +17,8 @@ def _load_wav(path):
     
     wav, fs = sf.read(path)
     wav, _   = librosa.effects.trim(y=wav, top_db=60)
-    if fs != 16000:
-        wav = resampy.resample(x=wav, sr_orig=fs, sr_new=16000, axis=0)
+    if fs != 32000:
+        wav = resampy.resample(x=wav, sr_orig=fs, sr_new=32000, axis=0)
 
     peak = np.abs(wav).max()
     if peak > 1.0:
@@ -49,7 +49,7 @@ def main(cfg):
 
             for i in tqdm(range(len(metadata))):
                 wav       = _load_wav(metadata[i]['wav_path']).cuda()
-                feat      =  wavlm(wav)[0].squeeze().detach().cpu().numpy()
+                feat      =  wavlm.extract_features(wav)[0].squeeze().detach().cpu().numpy()
                 save_path = metadata[i]['mel_path'].replace('mels', 'wavlm')
                 os.makedirs(os.path.dirname(save_path), exist_ok=True)
                 np.save(save_path, feat)
